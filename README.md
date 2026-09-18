@@ -111,10 +111,10 @@ Controls a 5-zone garden sprinkler system with a shared pump, using ESPHome's `s
 ## Setup
 
 1. Install [ESPHome](https://esphome.io/).
-2. Copy `secrets.yaml.example` to `secrets.yaml` and fill in your own WiFi credentials, API encryption keys, OTA passwords and fallback hotspot passwords.
+2. Copy `secrets.yaml.example` to `secrets.yaml` in the repo root and fill in your own WiFi credentials, API encryption keys, OTA passwords and fallback hotspot passwords.
    - Generate an API encryption key with `esphome generate-api-key` (or use the ESPHome dashboard's "encryption key" helper).
    - Generate an OTA/hotspot password with any password generator, or e.g. `openssl rand -hex 16`.
-3. `secrets.yaml` is gitignored and must never be committed - it holds real credentials.
+3. `secrets.yaml` is gitignored and must never be committed - it holds real credentials. ESPHome only looks for `secrets.yaml` in the same directory as the config file being read, so each device folder (`garage-door/`, `mailbox/`, ...) already contains a `secrets.yaml` symlink pointing back to this single root file - nothing else to set up.
 4. Flash/update a device with:
    ```
    esphome run <folder>/<file>.yaml

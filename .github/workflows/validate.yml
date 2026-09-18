@@ -34,11 +34,10 @@ jobs:
       # secrets.yaml is gitignored and never committed, so CI needs its own
       # syntactically valid (but fake) copy just so `esphome config` can
       # resolve all !secret references. None of these values are real.
-      # It's written to the repo root. ESPHome resolves secrets.yaml
-      # relative to the current working directory, not the config file's
-      # location, so validation below must also run from the repo root
-      # (matching how the configs are run locally: `esphome run <dir>/<file>.yaml`
-      # from the repo root).
+      # ESPHome looks for secrets.yaml in the same directory as the config
+      # file being read - each device folder has a secrets.yaml symlink
+      # pointing back to this root file, so writing it once here is enough
+      # for every device (matches the local setup, see README).
       - name: Create dummy secrets.yaml for validation
         run: |
           cat > secrets.yaml << 'SECRETS'

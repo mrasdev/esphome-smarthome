@@ -1,0 +1,16 @@
+# Real secrets - never commit. Only the root file is real; the copies
+# inside each device folder are symlinks to this one (see README Setup).
+/secrets.yaml
+
+# ESPHome build artifacts
+.esphome/
+.pioenvs/
+.piolibdeps/
+*.bin
+*.elf
+*.map
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
