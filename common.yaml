@@ -1,0 +1,62 @@
+# Shared base configuration included by every device via:
+#   packages:
+#     common: !include ../common.yaml
+#
+# Anything that differs per device (esphome.name/friendly_name, api encryption
+# key, ota password, wifi ap ssid/password, and all device-specific sensors/
+# switches/etc.) stays in the individual device yaml files.
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+  local: true
+
+light:
+  - platform: status_led
+    name: "Status LED"
+    id: statusled
+    internal: true
+    pin:
+      number: GPIO04
+      inverted: false
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+    disabled_by_default: true
+  - platform: copy
+    source_id: wifi_signal_db
+    name: "WiFi Signal"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: " %"
+    entity_category: "diagnostic"
+    disabled_by_default: true
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: btn_restart
+    icon: "mdi:restart"
+  - platform: template
+    name: "Heartbeat"
+    id: btn_heartbeat
+    icon: "mdi:alarm-light"
+    on_press:
+      then:
+        - light.toggle: statusled
+        - delay: 100ms
+        - light.toggle: statusled

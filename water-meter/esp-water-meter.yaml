@@ -7,6 +7,9 @@ esphome:
           id: water_meter
           value: !lambda 'return id(flash_total_pulses);'
 
+packages:
+  common: !include ../common.yaml
+
 preferences:
   flash_write_interval: 5min
   
@@ -14,14 +17,6 @@ globals:
   - id: flash_total_pulses
     type: int
     restore_value: yes
-
-esp32:
-  board: esp32dev
-  framework:
-    type: esp-idf
-
-# Enable logging
-logger:
 
 # Enable Home Assistant API
 api:
@@ -47,37 +42,7 @@ wifi:
     ssid: "Esp-Water-Meter Fallback Hotspot"
     password: !secret ap_password_water_meter
 
-captive_portal:
-
-web_server:
-  port: 80
-  version: 3
-  local: true
-
-light:
-  - platform: status_led
-    name: "Status LED"
-    id: statusled
-    internal: true
-    pin: 
-      number: GPIO04
-      inverted: false
-
 sensor:
-  - platform: wifi_signal
-    name: "WiFi Signal dB"
-    id: wifi_signal_db
-    update_interval: 60s
-    entity_category: "diagnostic"
-    disabled_by_default: true
-  - platform: copy 
-    source_id: wifi_signal_db
-    name: "WiFi Signal"
-    filters:
-      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
-    unit_of_measurement: " %"
-    entity_category: "diagnostic"
-    disabled_by_default: true
   - platform: pulse_meter
     pin:
       number: GPIO21
@@ -110,18 +75,3 @@ sensor:
             id(flash_total_pulses) = x;
             return x;
         - multiply: 0.001
-
-button:
-  - platform: restart
-    name: "Restart"
-    id: btn_restart
-    icon: "mdi:restart"
-  - platform: template
-    name: "Heartbeat"
-    id: btn_heartbeat
-    icon: "mdi:alarm-light"
-    on_press: 
-      then:
-        - light.toggle: statusled
-        - delay: 100ms
-        - light.toggle: statusled   
