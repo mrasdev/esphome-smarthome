@@ -1,0 +1,181 @@
+esphome:
+  name: "esp-irrigation"
+  friendly_name: ESP Irrigation
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key_irrigation
+
+# Allow Over-The-Air updates
+ota:
+  - platform: esphome
+    password: !secret ota_password_irrigation
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Esp-Irrigation Fallback Hotspot"
+    password: !secret ap_password_irrigation
+
+captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+  local: true
+
+light:
+  - platform: status_led
+    name: "Status LED"
+    id: statusled
+    internal: true
+    pin: 
+      number: GPIO04
+      inverted: false
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+    disabled_by_default: true
+  - platform: copy 
+    source_id: wifi_signal_db
+    name: "WiFi Signal"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: " %"
+    entity_category: "diagnostic"
+    disabled_by_default: true
+
+switch:
+  - platform: gpio
+    name: "Option LED"
+    id: optionled
+    internal: true
+    pin: 
+      number: GPIO13
+      inverted: false
+  - platform: gpio
+    name: "Valve 1"
+    id: valve1
+    pin: GPIO21
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - delay: 1h
+    - switch.turn_off: valve1
+  - platform: gpio
+    name: "Valve 2"
+    id: valve2
+    pin: GPIO22
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - delay: 1h
+    - switch.turn_off: valve2
+  - platform: gpio
+    name: "Valve 3"
+    id: valve3
+    pin: GPIO23
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - delay: 1h
+    - switch.turn_off: valve3
+  - platform: gpio
+    name: "Valve 4"
+    id: valve4
+    pin: GPIO25
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - delay: 1h
+    - switch.turn_off: valve4
+  - platform: gpio
+    name: "Valve 5"
+    id: valve5
+    pin: GPIO26
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - delay: 1h
+    - switch.turn_off: valve5
+  - platform: gpio
+    name: "Master"
+    id: master
+    pin: GPIO27
+    inverted: true
+    internal: false
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+    - light.turn_on: statusled    
+    - delay: 5h
+    - switch.turn_off: master
+    on_turn_off:
+    - light.turn_off: statusled
+
+sprinkler:
+  - id: sprinkler_ctrlr
+    main_switch: "Garden Sprinkler"
+    auto_advance_switch: "Auto Advance"
+    valve_overlap: 2s
+    pump_start_valve_delay: 2s
+    pump_stop_pump_delay: 2s
+    valves:
+      - valve_switch: "Mountain"
+        enable_switch: "Enable Mountain"
+        run_duration_number: "Mountain Duration"
+        valve_switch_id: valve1
+        pump_switch_id: master
+      - valve_switch: "Terrace"
+        enable_switch: "Enable Terrace"
+        run_duration_number: "Terrace Duration"
+        valve_switch_id: valve3      
+        pump_switch_id: master
+      - valve_switch: "North"
+        enable_switch: "Enable North"
+        run_duration_number: "North Duration"
+        valve_switch_id: valve2
+        pump_switch_id: master
+      - valve_switch: "Stairs"
+        enable_switch: "Enable Stairs"
+        run_duration_number: "Stairs Duration"
+        valve_switch_id: valve5
+        pump_switch_id: master
+      - valve_switch: "Plants"
+        enable_switch: "Enable Plants"
+        run_duration_number: "Plants Duration"
+        valve_switch_id: valve4
+        pump_switch_id: master
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: btn_restart
+    icon: "mdi:restart"
+  - platform: template
+    name: "Heartbeat"
+    id: btn_heartbeat
+    icon: "mdi:alarm-light"
+    on_press: 
+      then:
+        - light.toggle: statusled
+        - delay: 100ms
+        - light.toggle: statusled
