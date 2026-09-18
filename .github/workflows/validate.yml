@@ -34,10 +34,11 @@ jobs:
       # secrets.yaml is gitignored and never committed, so CI needs its own
       # syntactically valid (but fake) copy just so `esphome config` can
       # resolve all !secret references. None of these values are real.
-      # It's written to the repo root, one level above each device folder
-      # (../secrets.yaml from where `esphome config` below actually runs),
-      # matching how ESPHome resolves secrets.yaml for configs that live in
-      # subfolders (same layout used when flashing locally).
+      # It's written to the repo root. ESPHome resolves secrets.yaml
+      # relative to the current working directory, not the config file's
+      # location, so validation below must also run from the repo root
+      # (matching how the configs are run locally: `esphome run <dir>/<file>.yaml`
+      # from the repo root).
       - name: Create dummy secrets.yaml for validation
         run: |
           cat > secrets.yaml << 'SECRETS'
@@ -74,5 +75,4 @@ jobs:
         run: pip install esphome
 
       - name: Validate ${{ matrix.dir }}/${{ matrix.file }}
-        working-directory: ${{ matrix.dir }}
-        run: esphome config ${{ matrix.file }}
+        run: esphome config ${{ matrix.dir }}/${{ matrix.file }}
