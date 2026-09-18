@@ -1,0 +1,78 @@
+name: Validate ESPHome configs
+
+on:
+  push:
+    paths:
+      - "**/*.yaml"
+      - ".github/workflows/validate.yml"
+  pull_request:
+    paths:
+      - "**/*.yaml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: garage-door
+            file: esp-garage-door.yaml
+          - dir: mailbox
+            file: esp-mailbox.yaml
+          - dir: water-meter
+            file: esp-water-meter.yaml
+          - dir: radiator-fan
+            file: esp-radiator-fan.yaml
+          - dir: irrigation
+            file: esp-irrigation.yaml
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # secrets.yaml is gitignored and never committed, so CI needs its own
+      # syntactically valid (but fake) copy just so `esphome config` can
+      # resolve all !secret references. None of these values are real.
+      # It's written to the repo root, one level above each device folder
+      # (../secrets.yaml from where `esphome config` below actually runs),
+      # matching how ESPHome resolves secrets.yaml for configs that live in
+      # subfolders (same layout used when flashing locally).
+      - name: Create dummy secrets.yaml for validation
+        run: |
+          cat > secrets.yaml << 'SECRETS'
+          wifi_ssid: "ci-dummy-ssid"
+          wifi_password: "ci-dummy-password"
+
+          api_encryption_key_garage_door: "5G3TzUFEy0F+7zVFTKz1nRz+d3sSs+Q7bVYFq0m8qUA="
+          ota_password_garage_door: "0123456789abcdef0123456789abcdef"
+          ap_password_garage_door: "ci-dummy-password"
+
+          api_encryption_key_mailbox: "5G3TzUFEy0F+7zVFTKz1nRz+d3sSs+Q7bVYFq0m8qUA="
+          ota_password_mailbox: "0123456789abcdef0123456789abcdef"
+          ap_password_mailbox: "ci-dummy-password"
+
+          api_encryption_key_water_meter: "5G3TzUFEy0F+7zVFTKz1nRz+d3sSs+Q7bVYFq0m8qUA="
+          ota_password_water_meter: "0123456789abcdef0123456789abcdef"
+          ap_password_water_meter: "ci-dummy-password"
+
+          api_encryption_key_radiator_fan: "5G3TzUFEy0F+7zVFTKz1nRz+d3sSs+Q7bVYFq0m8qUA="
+          ota_password_radiator_fan: "0123456789abcdef0123456789abcdef"
+          ap_password_radiator_fan: "ci-dummy-password"
+
+          api_encryption_key_irrigation: "5G3TzUFEy0F+7zVFTKz1nRz+d3sSs+Q7bVYFq0m8qUA="
+          ota_password_irrigation: "0123456789abcdef0123456789abcdef"
+          ap_password_irrigation: "ci-dummy-password"
+          SECRETS
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ESPHome
+        run: pip install esphome
+
+      - name: Validate ${{ matrix.dir }}/${{ matrix.file }}
+        working-directory: ${{ matrix.dir }}
+        run: esphome config ${{ matrix.file }}
